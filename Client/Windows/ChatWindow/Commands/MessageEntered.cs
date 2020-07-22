@@ -34,7 +34,6 @@ namespace MyClient.Windows.ChatWindow.Commands
 
         void ICommand.Execute(object parameter)
         {
-
             IRequest request = new SendMessage(ViewModel.SelectedChat.RecipientUsername, ViewModel.MessageBoxContent);
 
             Session.SendRequest(request);

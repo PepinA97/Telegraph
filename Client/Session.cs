@@ -15,7 +15,7 @@ namespace MyClient
         static Thread KeepAliveThread;
         static Thread ReceiveThread;
 
-        public static void Start(ViewModel viewModel)
+        public static bool Start(ViewModel viewModel)
         {
             ViewModel = viewModel;
 
@@ -26,7 +26,7 @@ namespace MyClient
             ReceiveThread.Start();
 
             // Show the view
-            ViewModel.Show();
+            return ViewModel.Show(new View());
         }
 
         public static void Stop()
@@ -68,6 +68,11 @@ namespace MyClient
             
             while (true)
             {
+                if (!TCPClient.Connected)
+                {
+                    return;
+                }
+
                 if(DateTime.Compare(DateTime.Now, whenSendNextPacket) > 0)
                 {
                     // Send keep alive packets every such and such interval

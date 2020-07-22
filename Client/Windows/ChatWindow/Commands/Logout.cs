@@ -36,7 +36,7 @@ namespace MyClient.Windows.ChatWindow.Commands
 
         void ICommand.Execute(object parameter)
         {
-            ViewModel.ShouldLogout = true;
+            ViewModel.Close(true);
         }
     }
 }

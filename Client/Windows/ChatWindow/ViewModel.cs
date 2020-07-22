@@ -5,6 +5,7 @@ using MyClient.Windows.ChatWindow.Commands;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Windows;
 using System.Windows.Data;
 using System.Windows.Input;
@@ -22,35 +23,7 @@ namespace MyClient.Windows.ChatWindow
         }
         #endregion
 
-        public ViewModel(string username)
-        {
-            View = new View(this);
-
-            // Set visible username
-            CUsername = username;
-
-            // Initialize empty chats
-            UserChats = new ObservableCollection<Chat>();
-
-            // Commands initialization
-            MessageEntered = new MessageEntered(this);
-            SearchUsername = new SearchUsername(this);
-
-            ChatMessages = new ObservableCollection<string>();
-
-            // Create locks for accessing across threads
-            UserChatsLock = new object();
-            BindingOperations.EnableCollectionSynchronization(UserChats, UserChatsLock);
-
-            ChatMessagesLock = new object();
-            BindingOperations.EnableCollectionSynchronization(ChatMessages, ChatMessagesLock);
-
-            // Get existing chats from server
-            IRequest request = new GetChats();
-            Session.SendRequest(request);
-        }
-
-        public View View;
+        View View;
 
         public string CUsername { get; set; }
 
@@ -101,19 +74,28 @@ namespace MyClient.Windows.ChatWindow
 
         public bool? TestUsernameResult;
 
-        public bool ShouldLogout { get; set; }
-
         object UserChatsLock;
         object ChatMessagesLock;
 
+        public ICommand Logout { get; set; }
         public ICommand MessageEntered { get; set; }
         public ICommand SearchUsername { get; set; }
 
-        public bool Show()
+        public bool Show(View view)
         {
+            View = view;
+            view.DataContext = this;
+
             bool? result = View.ShowDialog();
 
             return result.GetValueOrDefault();
+        }
+
+        public void Close(bool shouldLogout)
+        {
+            View.DialogResult = shouldLogout;
+
+            View.Close();
         }
 
         public void PopulateUserChats(List<Chat> chats)
@@ -131,11 +113,25 @@ namespace MyClient.Windows.ChatWindow
         {
             string senderUsername = message.SenderUsername;
 
+            bool found = false;
             foreach (Chat chat in UserChats)
             {
                 if (ValidChat(chat, senderUsername, receiverUsername))
                 {
                     chat.Messages.Add(message);
+                    found = true;
+                }
+            }
+
+            if (!found)
+            {
+                Chat newChat = new Chat(receiverUsername, senderUsername, new List<Message>());
+
+                newChat.Messages.Add(message);
+
+                lock (UserChatsLock)
+                {
+                    UserChats.Add(newChat);
                 }
             }
 
@@ -145,7 +141,7 @@ namespace MyClient.Windows.ChatWindow
                 {
                     Application.Current.Dispatcher.Invoke(delegate
                     {
-                        ChatMessages.Add(message.SenderUsername + ": " + message.Content);
+                        ChatMessages.Add(senderUsername + ": " + message.Content);
                     });
 
                     OnPropertyChanged("SelectedChat");
@@ -155,8 +151,35 @@ namespace MyClient.Windows.ChatWindow
 
         bool ValidChat(Chat chat, string firstUsername, string secondUsername)
         {
-            return chat.InitiatorUsername == firstUsername && chat.RecipientUsername == secondUsername ||
-                chat.InitiatorUsername == secondUsername && chat.RecipientUsername == firstUsername;
+            return (chat.InitiatorUsername == firstUsername && chat.RecipientUsername == secondUsername) ||
+                (chat.InitiatorUsername == secondUsername && chat.RecipientUsername == firstUsername);
+        }
+
+        public ViewModel(string username)
+        {
+            // Set visible username
+            CUsername = username;
+
+            // Initialize empty chats
+            UserChats = new ObservableCollection<Chat>();
+
+            // Commands initialization
+            Logout = new Logout(this);
+            MessageEntered = new MessageEntered(this);
+            SearchUsername = new SearchUsername(this);
+
+            ChatMessages = new ObservableCollection<string>();
+
+            // Create locks for accessing across threads
+            UserChatsLock = new object();
+            BindingOperations.EnableCollectionSynchronization(UserChats, UserChatsLock);
+
+            ChatMessagesLock = new object();
+            BindingOperations.EnableCollectionSynchronization(ChatMessages, ChatMessagesLock);
+
+            // Get existing chats from server
+            IRequest request = new GetChats();
+            Session.SendRequest(request);
         }
     }
 }

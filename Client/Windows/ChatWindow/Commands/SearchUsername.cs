@@ -63,7 +63,8 @@ namespace MyClient.Windows.ChatWindow.Commands
 
             ViewModel.UserChats.Add(newChat);
 
-            ViewModel.SearchContent = "";
+            ViewModel.SearchContent = String.Empty;
+            ViewModel.OnPropertyChanged("SearchContent");
         }
     }
 }

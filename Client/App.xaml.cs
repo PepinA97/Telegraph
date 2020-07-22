@@ -12,36 +12,32 @@ namespace MyClient
     {
         private void App_Startup(object sender, StartupEventArgs e)
         {
-#if DEBUG_CHATWINDOW_ONLY
-            bool shouldLogout = false;
-
-            Windows.Startup startupWindow = new Windows.Startup();
-
-            // Show "startup window" dialog, get result - if true then start main window
-            bool? result = startupWindow.ShowDialog();
-
-            if ((result != null) && ((bool)result))
+            while (true)
             {
-                // Initialize the view model
-                ViewModel viewModel = new ViewModel(startupWindow.Username);
+                Windows.Startup startupWindow = new Windows.Startup();
 
-                // Start the session (also shows the view)
-                Session.Start(viewModel);
+                // Show "startup window" dialog, get result - if true then start main window
+                bool? result = startupWindow.ShowDialog();
 
-                Session.Stop();
+                if (result.GetValueOrDefault())
+                {
+                    // Initialize the view model
+                    ViewModel viewModel = new ViewModel(startupWindow.Username);
 
-                shouldLogout = viewModel.ShouldLogout;
+                    bool isLogout = Session.Start(viewModel);
+
+                    Session.Stop();
+
+                    if (isLogout)
+                    {
+                        continue;
+                    }
+                }
+
+                break;
             }
+
             Shutdown();
-#else
-
-            // Initialize the view model
-            ChatWindow.ViewModel viewModel = new ChatWindow.ViewModel("Anderson");
-
-            // Start the session (also shows the view)
-            Session.Start(null, viewModel);
-#endif
-
         }
     }
 }

@@ -1,4 +1,4 @@
-﻿#define DEBUG
+﻿#undef DEBUG
 
 using MyServer.Networking;
 using System;

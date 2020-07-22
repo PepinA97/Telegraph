@@ -29,7 +29,7 @@
                 <TextBlock x:Name="UsernameBlock" Text="{Binding CUsername}" FontSize="20" Margin="0,0,0,5"></TextBlock>
 
                 <TextBlock Grid.Column="1" VerticalAlignment="Bottom">
-                    <Hyperlink>Logout</Hyperlink>
+                    <Hyperlink Command="{Binding Logout}">Logout</Hyperlink>
                 </TextBlock>
             </Grid>
 

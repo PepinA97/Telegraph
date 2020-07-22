@@ -7,11 +7,9 @@ namespace MyClient.Windows.ChatWindow
     /// </summary>
     partial class View : Window
     {
-        public View(ViewModel viewModel)
+        public View()
         {
             InitializeComponent();
-
-            DataContext = viewModel;
         }
     }
 }
